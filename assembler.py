@@ -48,7 +48,6 @@ def assembleMachineCode(words, theOutputFile):
 
     if wordCount == 3:
         # If R Type
-        #
         op = getOp(words[0])
         reg1 = registers[words[1]]
         reg2 = registers[words[2]]
@@ -56,15 +55,19 @@ def assembleMachineCode(words, theOutputFile):
         theOutputFile.write(format(reg1, 'b').zfill(3))
         theOutputFile.write(format(reg2, 'b').zfill(2))
         addComment()
-        # Else if
-    if wordCount == 4:
+
+    if wordCount == 4: # Shift Op
         # If F Type
         op = getOp(words[0])
         reg1 = registers[words[1]]
-        reg2 = registers[words[2]]
+        amt = int(words[2])
+        direction = int(words[3])
+
+
         theOutputFile.write(format(op, 'b').zfill(4))
         theOutputFile.write(format(reg1, 'b').zfill(3))
-        theOutputFile.write(format(reg2, 'b').zfill(2))
+        theOutputFile.write(format( amt, 'b').zfill(1))
+        theOutputFile.write(format( direction, 'b').zfill(1))
         addComment()
 
 

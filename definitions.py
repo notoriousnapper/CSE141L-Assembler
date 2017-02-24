@@ -39,7 +39,7 @@ trickyOpCode = {
 #0011  mov			R-Type
 #0100  mov_int	    R-Type
 #0101  load_inc	    R-Type
-#0110 st 		    R-Type
+#0110  st 		    R-Type
 #0111  xor			R-Type
 
 # I-type:  _  _  _  _ | _  _  _  _  _  (SCRATCH - Same type as J-Type)
