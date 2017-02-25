@@ -1,0 +1,19 @@
+VIM INSTRUCTIONS
+################################################################################
+
+dd - deletes line (also is "cut")
+yy - copy selected line
+p - pastes copied buffer
+shift y - selects multiple lines (up down), can be used with yy & p
+
+x - delete single character
+r - replaces single character
+
+shift-i = appends to front
+shift-a = appends to back
+
+"m a", and  apostrophe "a" --. Marks a place you can go to, and 2nd command goes there
+
+USEFUL ATOM INSTRUCTIONS
+################################################################################
+Command-"/" --> Comments current selected
