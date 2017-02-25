@@ -13,13 +13,6 @@
 # 2. Run it through assembler, generate two output files output_18.txt and output_19.txt
 # 3. Repeat for problem #17
 
-
-
-
-
-
-
-
 from bitstring import Bits
 import definitions
 from definitions import getOp
@@ -47,15 +40,19 @@ def addComment():
 
 def assembleMachineCode(words, theOutputFile):
     wordCount = len(words)
+
+    # halt (x type)
     if wordCount == 1:
         op = getOp(words[0])
         theOutputFile.write(format(op, 'b').zfill(4))   #b means write in binary
         theOutputFile.write(format(0, 'b').zfill(5))
         addComment()
 
+    # IJ or X types
     if wordCount == 2:
         op = getOp(words[0])
         theOutputFile.write(format(op, 'b').zfill(4))
+        #
         if registers.has_key(words[1]):
             register = registers[words[1]]
             theOutputFile.write(format(register, 'b').zfill(3))
@@ -68,6 +65,7 @@ def assembleMachineCode(words, theOutputFile):
                 theOutputFile.write(str(Bits(int = immediate, length = 6).bin))
         addComment()
 
+    # R and H types
     if wordCount == 3:
         # If R Type
         op = getOp(words[0])
@@ -78,8 +76,8 @@ def assembleMachineCode(words, theOutputFile):
         theOutputFile.write(format(reg2, 'b').zfill(2))
         addComment()
 
+    # F types
     if wordCount == 4: # Shift Op
-        # If F Type
         op = getOp(words[0])
         reg1 = registers[words[1]]
         amt = int(words[2])
@@ -94,7 +92,7 @@ def assembleMachineCode(words, theOutputFile):
 
 
 if __name__ == "__main__":
-    print("Aholson's Stupid Simple Python Assembler:\n")
+    print("Ren Jie Shi's Stupid Simple Python Assembler:\n")
     print("Beginning Assembly now!")
     with open('SampleAsm.s') as theInputFile, open('machineCode.txt', 'w') as theOutputFile:
         lineCount = 1
@@ -103,5 +101,6 @@ if __name__ == "__main__":
             # print line
             words = line.split()
             # print words
+            try
             assembleMachineCode(words, theOutputFile)
             lineCount += 1

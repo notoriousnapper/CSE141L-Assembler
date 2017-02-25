@@ -1,0 +1,174 @@
+// mov
+// ld
+// st
+// sh
+// sh
+// add
+// and
+// xor
+// bne
+// ba
+
+	// %R1 = MSB A
+	// %R2 = LSB A
+	// %R3 = B
+	// %R4 = signed bit (0 = positive, 1 = negative)
+	// %R5 = least sig bit of B / temp reg 1
+	// %R6 = temp reg 2
+	// %R7 = MSB product
+	// %R8 = LSB product
+
+	mov 0, %R7
+	mov 0, %R8
+
+	ld M[1], %R1			// %R1 = MSB A
+	ld M[2], %R2			// %R2 = LSB A
+	ld M[3], %R3			// %R3 = MSB B
+	ld M[4], %R4			// %R4 = LSB B
+
+	sh %R3, 1, 1
+	add %R4, %R3			// move MSB and LSB of B to single register
+
+	mov 0x08, %R4
+	and %R1, %R4			// %R4 = check signed bit of A
+	sh %R4, 1, 1					// align with MSB
+
+	mov 0x80, %R5
+	and %R3, %R5			// %R5 = check signed bit of B
+
+	mov %R5, %R6
+	and %R4, %R6
+
+	cmp %R6, 0
+	bne NEGA		// if A && B are neg, fp is pos
+
+	cmp %R5, 0
+	bne NEGB
+
+NEGA:						// if A is neg, abs
+
+	mov 0xFF, %R4
+	xor %R4, %R1			// take two's comp: xor by 1's
+	mov 0x01, %R4
+	add %R4, %R1			// add 1
+
+	cmp %R6, 0
+	bne NEGB		// NEGAB
+	mov 1, %R4
+	ba SMULTIPLY
+
+NEGB:						// if B is neg, abs
+
+	mov 0xFF, %R4
+	xor %R4, %R2			// take two's comp: xor by 1's
+	mov 0x01, %R4
+	add %R4, %R2			// add 1
+
+  cmp %R6, 0
+	bne NEGAB		// NEGAB
+	mov 1, %R4
+	ba SMULTIPLY
+
+NEGAB:
+
+	mov 0, %R4
+
+SMULTIPLY:
+
+	mov 0x01, %R5
+	and %R3, %R5			// %R5 = least sig bit of B
+
+	bne %R5, 1, SHIFT		// if LSB == 0, jump
+
+	mov 0x0F, %R5
+	and %R8, %R5			// ---- FP[R8LSB]
+	add %R2, %R5			// ---- A[LSB] + FP[R8LSB]
+
+	mov 0xF0, %R6
+	and %R8, %R6			// FP[R8MSB] ----
+	sh %R6, 1, 0					// ----	FP[R8MSB]
+
+	mov %R5, %R8			// move LSB to final product
+
+	mov 0xF0, %R5
+	and %R8, %R5			// OV[FP[R8LSB]]
+	sh %R5, 1, 0					// ----	OV[FP[R8LSB]]
+
+	add %R5, %R6			// OV[FP[R8LSB]] + FP[R8MSB]
+
+	mov 0x0F, %R5			// clear MSB of R8
+	and %R5, %R8			// ----	FB[R8LSB]
+
+	add %R1, %R6			// ---- A[MSB] + ( OV[FP[R8LSB]] + FP[R8MSB] )
+
+	mov 0x0F, %R5
+	and %R6, %R5
+	sh %R5, 1, 1					// A[MSB] + ( OV[FP[R8LSB]] + FP[R8MSB] ) ----
+
+	add %R5, %R8			// FP[R8MSB]	FP[R8LSB]
+	sh %R6, 1, 0					// ----	OV[FP[R8MSB]]
+
+	add %R6, %R7			// OV[FP[R8MSB]] + FP[R7]
+
+SHIFT:
+
+	mov 0x08, %R5
+	and %R2, %R5			// most sig bit of A LSB
+	sh %R5, 0, 0
+	sh %R5, 0, 0
+	sh %R5, 0, 0
+
+	sh %R2, 0, 1					// shift A left 1
+	sh %R1, 0, 1
+	add %R5, %R1			// move bit from LSB A to MSB A
+
+	mov 0x0F, %R5
+	and %R5, %R1			// clear MSB of MSB A
+	and %R5, %R2			// clear MSB of LSB A
+
+	sh %R3, 0, 0		        // shift B right 1
+
+	bne %R2, %R0, SMULTIPLY
+
+	bne %R4, 0, STORE		// if unsigned
+
+	// if signed, take two's comp and add 1
+
+	mov 0xFF, %R5
+	xor %R5, %R7			// take two's comp: xor by 1's
+	xor %R5, %R8
+
+	mov 0x01, %R5
+	mov 0x0F, %R6
+	and %R8, %R6			// ---- LSB[R8]
+	add %R5, %R6			// ---- LSB[R8]+1
+
+	mov 0xF0, %R5
+	and %R8, %R5			// MSB[R8] ----
+	sh %R5, 1, 0					// ---- MSB[R8]
+
+	mov %R6, %R8 			// move LSB[R8] + 1 to R8
+
+	mov 0xF0, %R6
+	and %R8, %R6			// OV[LSB] ----
+	sh %R6, 0, 0					// ---- OV[LSB]
+
+	add %R6, 1, %R5			// OV[LSB] + MSB[R8]
+
+	mov %0F, %R6			// clear MSB of R8
+	and %R6, %R8 			// R8 = ---- LSB[R8]+1
+
+	mov %0F, %R6
+	and %R5, %R6			// ---- OV[LSB]+MSB[R8]
+	sh %R6, 1, 1					// MSB[R8]+OV[LSB] ----
+
+	add %R6, %R8 			// MSB[R8]+OV[LSB]	LSB[R8]+1
+
+	sh %R5, 1, 0					// ---- OV[MSB]
+
+	add %R5, %R7			// OV[MSB] + R7
+
+STORE:
+
+	st %R7, M[5]
+	st %R8, M[6]

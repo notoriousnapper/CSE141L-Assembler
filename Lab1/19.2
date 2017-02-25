@@ -1,0 +1,65 @@
+I
+
+
+Internal Reg
+%I1 - Counter 1
+%I2 -
+%I3 - Accumulator 1, is the result of movi, mov_int
+%I4 - Always holds 0.  Like %g0 in spark
+
+External Reg
+R1 - Holds 1 constant
+R2 - Inner counter
+
+R3 - Current Max
+R4 - Current Byte of Outer Loop
+R5 - Current Byte of Inner Loop
+R6 - Holds XOR'd result of R4 & R5
+
+R7 - LSB of R6
+
+R8 - Holds Hammond distance for current pair of Bytes
+
+	mov %I4, %R3				// highest dial
+	movi 0x01
+  mov_int %I3, %R1    // Store 1 in R1
+
+OUTER:
+
+  movi 0x14          // Compare 20
+  cmp %I3, %R1
+	bne end
+
+
+  mov_int %I0, %R4
+	load_inc %R4, %R4 // Fix HW
+	mov %G0, %R5			// copy at outer loop counter
+	mov_int %I4, %R8				// hamming temp distance  *** reset
+
+  mov_int %I0, %R2
+	add %R1, %R2		// inner loop counter (1 + R1)
+
+INNER:
+  movi 0x14
+  cmp %I3, %R2
+	bne INNER_END
+	load_inc %R5, %R6		// current data for inner loop
+	xor %R4, %R6        // getting hamming value
+
+  mov %R6, %R7	//  MASK:
+	and 1, %R7
+	add %R7, %R8, %R8		// adding together hamming distances TEMP ***
+	sh %R6, 0, 0					// shift right
+
+  cmp_int %I4, %R6
+	bne -5
+
+	add 1, %R2			// inc counter
+	ble INNER
+	mov %R8, %R3			// compare and replace it >
+	ba inner
+
+INNER_END:
+  inc  %I0, 1
+	ba outer
+	end

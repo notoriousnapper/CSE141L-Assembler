@@ -1,0 +1,82 @@
+
+Internal Reg
+%I1 - Counter 1
+%I2 - Counter 2
+%I3 - Accumulator 1, is the result of movi, mov_int
+%I4 - Always holds 0.  Like %g0 in spark
+
+% R2 - Stores the 64 Value
+  R3 - Reusable, used for storing calculated address to store, as temp
+  R4 - Stores 5 Constant
+  R5 - Stores the 4-bit string
+  R6 -
+
+# Steps to add 1 without compromising a different add instruction format.
+  load_inc %R1, %R2   //  Doubles as an "add 1 instruction" to first register
+                      // %R1 has garbage value in this context
+
+  Notes:
+  1. Main reason we have a movi instruction, is because
+  there are two many circumstances where we need a mov with an immediate value
+  and a register.  the movi & mov_int combo solves that problem for now
+  2. We Re-ruse a lot of registers before they are finally set
+     Example, we use R1 early in the initialization stage knowing
+     it will be overwritten in the loop.  This way,
+     we still follow our R-Type rule of first operand = 2bit, and second = 3bit
+
+  movi     0x09
+  mov_int  $i3,%R5
+  load_inc %R2,%R2     // Load First Byte into R5
+  movi     0x0F, %R3
+  and      %R3, %R5    // Get 4-bit "String"
+
+  movi     0x20        // Big mov always moves into internal register 3
+  mov_int  %I3, %R6    // Stores 32 Constant
+
+  movi     0x40
+  mov_int  %I3, %R2    // Stores 64 Constant
+
+  mov_i    5
+  mov_int  %I3, %R4    // Stores 5 Constant
+
+
+
+OUTER:
+  mov      %R6, %R3   // Have to copy to follow R-Type rule, holds 32
+  load_inc %R3, %R7   // lds in one byte, and increments address
+  mov_int  %I4, %R8   // Reset Tally
+
+INNER:
+  mov      %R5, %R3   // Have to copy to follow R-Type rule
+  and      %R3, %R7   // BitMask to get 4LSB
+  cmp      %R3, %R7
+  bne      SKIP
+  add      %R1, %R8    //  Increment tally
+
+SKIP:
+  sh   %R7, 0, 0       //  Shifts current Byte to check next match
+  inc  %I1, 1          // Increment inner loop counter
+
+
+  cmp_int  %I1, %R4   // ^All this to check if ctr2 == 5
+  bne      INNER
+
+  # Store Tallied Frequency
+  mov      9,   %R3       //offset adds 1 extra, ie. 9 + 5 = 15, should be 14
+
+
+  add      %R8, %R3       # Holds calculated address
+
+
+
+  ld       %R3, %R8       # Re-use tally reg for a bit
+  add      %R1, %R8       #
+  st       %R8, %R3       #
+  mov_int  %I3, %R8        // Reset tally to 0
+
+  ####
+  inc   %I0, 1
+  cmp_int  %I0, %R2        // Outer loop stops at 64
+  bne  OUTER LOOP:
+
+END:
