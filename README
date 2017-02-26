@@ -1,3 +1,37 @@
+QUESTIONS:
+
+1. What is ZERO and EQUAL input for ALU?
+2.
+//. How should it be getting instruction fetch from a file?
+//. How does it return the corresponding instruction?
+//. InstROM things
+//
+
+
+TODO:
+1. ALU
+  - Test functionality and situations
+  - Branching check implement
+
+2. IF_Top Module
+  - Make sure it works seamlessly
+  -
+3. InstRAM
+  - make sure instructions are loading in
+4. Muxes to make everything talk to each other correctly
+
+
+
+
+
+
+
+
+
+
+
+
+
 VIM INSTRUCTIONS
 ################################################################################
 
